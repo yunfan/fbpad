@@ -19,6 +19,7 @@ static void *fb;			/* mmap()ed FB memory */
 static int bpp;				/* bytes per pixel */
 static int nr, ng, nb;			/* color levels */
 static int rl, rr, gl, gr, bl, br;	/* shifts per color */
+static int xres, yres, xoff, yoff;     /* viewport */
 
 static int fb_len(void)
 {
@@ -85,9 +86,28 @@ static void init_colors(void)
 	bl = vinfo.blue.offset;
 }
 
+/* simply the FB address "/dev/fb0", or to specify the view port "/dev/fb0:1000x600+20x10" */
+static void fb_parsedev(char *dev)
+{
+       char *s = strchr(dev, ':');
+       if (s != NULL) {
+               if (sscanf(s + 1, "%dx%d+%dx%d", &xres, &yres, &xoff, &yoff) != 4) {
+                       xres = 0;
+                       yres = 0;
+                       xoff = 0;
+                       yoff = 0;
+               }
+               fprintf(stderr, "%d %d %d %d\n", xres, yres, xoff, yoff);
+               *s = 0;
+       }
+}
+
 int fb_init(char *dev)
 {
-	fd = open(dev, O_RDWR);
+  char path[4096];
+  strcpy(path, dev);
+  fb_parsedev(path);
+  fd = open(path, O_RDWR);
 	if (fd < 0)
 		goto failed;
 	if (ioctl(fd, FBIOGET_VSCREENINFO, &vinfo) < 0)
@@ -118,17 +138,17 @@ void fb_free(void)
 
 int fb_rows(void)
 {
-	return vinfo.yres;
+  return yres ? yres : vinfo.yres;
 }
 
 int fb_cols(void)
 {
-	return vinfo.xres;
+  return xres ? xres : vinfo.xres;
 }
 
 void *fb_mem(int r)
 {
-	return fb + (r + vinfo.yoffset) * finfo.line_length + vinfo.xoffset * bpp;
+  return fb + (r + vinfo.yoffset + yoff) * finfo.line_length + (vinfo.xoffset + xoff) * bpp;
 }
 
 unsigned fb_val(int r, int g, int b)
