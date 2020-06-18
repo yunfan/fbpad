@@ -1,5 +1,5 @@
 /* framebuffer device */
-#define FBDEV		"/dev/fb0"
+#define FBDEV		"/dev/fb0:1346x748+20x20"
 
 /* list of tags */
 #define TAGS		"xnlhtr01uiva-"
@@ -17,7 +17,7 @@
 typedef unsigned int fbval_t;
 
 /* tinyfont files for regular, italic, and bold fonts */
-#define FR		"/path/to/font.tf"
+#define FR		"/usr/share/fonts/courr.tf"
 #define FI		NULL
 #define FB		NULL
 
